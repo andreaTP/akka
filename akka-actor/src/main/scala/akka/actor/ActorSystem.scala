@@ -342,10 +342,15 @@ object ActorSystem {
     final val LoggingFilter: String = getString("akka.logging-filter")
     final val LoggerStartTimeout: Timeout = Timeout(config.getMillisDuration("akka.logger-startup-timeout"))
     final val LogConfigOnStart: Boolean = config.getBoolean("akka.log-config-on-start")
-    final val LogDeadLetters: Int = toRootLowerCase(config.getString("akka.log-dead-letters")) match {
-      case "off" | "false" ⇒ 0
-      case "on" | "true"   ⇒ Int.MaxValue
-      case _               ⇒ config.getInt("akka.log-dead-letters")
+    final val LogDeadLetters: Int = try {
+      toRootLowerCase(config.getString("akka.log-dead-letters")) match {
+        case "off" | "false" ⇒ 0
+        case "on" | "true"   ⇒ Int.MaxValue
+        case _               ⇒ config.getInt("akka.log-dead-letters")
+      }
+    } catch {
+      case err: Throwable ⇒
+        10
     }
     final val LogDeadLettersDuringShutdown: Boolean = config.getBoolean("akka.log-dead-letters-during-shutdown")
 
@@ -369,8 +374,8 @@ object ActorSystem {
 
     final val DefaultVirtualNodesFactor: Int = getInt("akka.actor.deployment.default.virtual-nodes-factor")
 
-    if (ConfigVersion != Version)
-      throw new akka.ConfigurationException("Akka JAR version [" + Version + "] does not match the provided config version [" + ConfigVersion + "]")
+    // if (ConfigVersion != Version)
+    //   throw new akka.ConfigurationException("Akka JAR version [" + Version + "] does not match the provided config version [" + ConfigVersion + "]")
 
     /**
      * Returns the String representation of the Config that this Settings is backed by

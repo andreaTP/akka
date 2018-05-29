@@ -53,6 +53,9 @@ lazy val root = Project(
    unmanagedSources in(Compile, headerCreate) := (baseDirectory.value / "project").**("*.scala").get
  )
 
+lazy val fixResources =
+  taskKey[Unit]("Fix application.conf presence on first clean build.")
+  
 lazy val actor = akkaModule("akka-actor")
   .settings(Dependencies.actor)
   .settings(OSGi.actor)
@@ -61,6 +64,19 @@ lazy val actor = akkaModule("akka-actor")
     unmanagedSourceDirectories in Compile += {
       val ver = scalaVersion.value.take(4)
       (scalaSource in Compile).value.getParentFile / s"scala-$ver"
+    }
+  )
+  .settings(
+    fixResources := {
+      val compileConf = (resourceDirectory in Compile).value / "application.conf"
+      IO.copyFile(
+        compileConf,
+        (classDirectory in Compile).value / "application.conf"
+      )
+    },
+    compile in Compile := {
+      fixResources.value
+      (compile in Compile).value
     }
   )
   .settings(VersionGenerator.settings)

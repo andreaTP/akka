@@ -240,14 +240,28 @@ object CoordinatedShutdown extends ExtensionId[CoordinatedShutdown] with Extensi
     import scala.collection.JavaConverters._
     val defaultPhaseTimeout = conf.getString("default-phase-timeout")
     val phasesConf = conf.getConfig("phases")
+    // val defaultPhaseConfig = ConfigFactory.parseString(s"""
+    //   timeout = $defaultPhaseTimeout
+    //   recover = true
+    //   enabled = true
+    //   depends-on = []
+    // """)
     val defaultPhaseConfig = ConfigFactory.parseString(s"""
-      timeout = $defaultPhaseTimeout
+      timeout = 5 s
       recover = true
       enabled = true
       depends-on = []
     """)
+
     phasesConf.root.unwrapped.asScala.toMap.map {
-      case (k, _: java.util.Map[_, _]) ⇒
+      // case (k, _: java.util.Map[_, _]) ⇒
+      //   val c = phasesConf.getConfig(k).withFallback(defaultPhaseConfig)
+      //   val dependsOn = c.getStringList("depends-on").asScala.toSet
+      //   val timeout = c.getDuration("timeout", MILLISECONDS).millis
+      //   val recover = c.getBoolean("recover")
+      //   val enabled = c.getBoolean("enabled")
+      //   k → Phase(dependsOn, timeout, recover, enabled)
+      case (k, _: Map[_, _]) ⇒ // for shocon
         val c = phasesConf.getConfig(k).withFallback(defaultPhaseConfig)
         val dependsOn = c.getStringList("depends-on").asScala.toSet
         val timeout = c.getDuration("timeout", MILLISECONDS).millis

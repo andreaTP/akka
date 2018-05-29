@@ -458,13 +458,17 @@ object Logging {
    * valid inputs are upper or lowercase (not mixed) versions of:
    * "error", "warning", "info" and "debug"
    */
-  def levelFor(s: String): Option[LogLevel] = Helpers.toRootLowerCase(s) match {
-    case "off"     ⇒ Some(OffLevel)
-    case "error"   ⇒ Some(ErrorLevel)
-    case "warning" ⇒ Some(WarningLevel)
-    case "info"    ⇒ Some(InfoLevel)
-    case "debug"   ⇒ Some(DebugLevel)
-    case unknown   ⇒ None
+  def levelFor(s: String): Option[LogLevel] = try {
+    Helpers.toRootLowerCase(s) match {
+      case "off"     ⇒ Some(OffLevel)
+      case "error"   ⇒ Some(ErrorLevel)
+      case "warning" ⇒ Some(WarningLevel)
+      case "info"    ⇒ Some(InfoLevel)
+      case "debug"   ⇒ Some(DebugLevel)
+      case unknown   ⇒ None
+    }
+  } catch {
+    case _: Throwable ⇒ None
   }
 
   /**

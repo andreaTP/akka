@@ -83,16 +83,22 @@ class ForkJoinExecutorConfigurator(config: Config, prerequisites: DispatcherPrer
     val asyncMode = config.getString("task-peeking-mode") match {
       case "FIFO" ⇒ true
       case "LIFO" ⇒ false
-      case unsupported ⇒ throw new IllegalArgumentException("Cannot instantiate ForkJoinExecutorServiceFactory. " +
-        """"task-peeking-mode" in "fork-join-executor" section could only set to "FIFO" or "LIFO".""")
+      // case unsupported ⇒ throw new IllegalArgumentException("Cannot instantiate ForkJoinExecutorServiceFactory. " +
+      //   """"task-peeking-mode" in "fork-join-executor" section could only set to "FIFO" or "LIFO".""")
+      case _      ⇒ true
     }
 
     new ForkJoinExecutorServiceFactory(
       validate(tf),
+      // ThreadPoolConfig.scaledPoolSize(
+      //   config.getInt("parallelism-min"),
+      //   config.getDouble("parallelism-factor"),
+      //   config.getInt("parallelism-max")),
+      // asyncMode)
       ThreadPoolConfig.scaledPoolSize(
-        config.getInt("parallelism-min"),
-        config.getDouble("parallelism-factor"),
-        config.getInt("parallelism-max")),
+        8,
+        3.0,
+        64),
       asyncMode)
   }
 }

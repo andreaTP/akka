@@ -489,7 +489,8 @@ private[akka] class LocalActorRefProvider private[akka] (
       settings,
       eventStream,
       dynamicAccess,
-      new Deployer(settings, dynamicAccess),
+      // new Deployer(settings, dynamicAccess),
+      null.asInstanceOf[Deployer],
       None)
 
   override val rootPath: ActorPath = RootActorPath(Address("akka", _systemName))
@@ -735,16 +736,26 @@ private[akka] class LocalActorRefProvider private[akka] (
               systemService: Boolean, deploy: Option[Deploy], lookupDeploy: Boolean, async: Boolean): InternalActorRef = {
     props.deploy.routerConfig match {
       case NoRouter ⇒
-        if (settings.DebugRouterMisconfiguration) {
-          deployer.lookup(path) foreach { d ⇒
-            if (d.routerConfig != NoRouter)
-              log.warning("Configuration says that [{}] should be a router, but code disagrees. Remove the config or add a routerConfig to its Props.", path)
-          }
-        }
+        // if (settings.DebugRouterMisconfiguration) {
+        //   deployer.lookup(path) foreach { d ⇒
+        //     if (d.routerConfig != NoRouter)
+        //       log.warning("Configuration says that [{}] should be a router, but code disagrees. Remove the config or add a routerConfig to its Props.", path)
+        //   }
+        // }
 
         val props2 =
           // mailbox and dispatcher defined in deploy should override props
-          (if (lookupDeploy) deployer.lookup(path) else deploy) match {
+          // (if (lookupDeploy) deployer.lookup(path) else deploy) match {
+          //   case Some(d) ⇒
+          //     (d.dispatcher, d.mailbox) match {
+          //       case (Deploy.NoDispatcherGiven, Deploy.NoMailboxGiven) ⇒ props
+          //       case (dsp, Deploy.NoMailboxGiven)                      ⇒ props.withDispatcher(dsp)
+          //       case (Deploy.NoMailboxGiven, mbx)                      ⇒ props.withMailbox(mbx)
+          //       case (dsp, mbx)                                        ⇒ props.withDispatcher(dsp).withMailbox(mbx)
+          //     }
+          //   case _ ⇒ props // no deployment config found
+          // }
+          deploy match {
             case Some(d) ⇒
               (d.dispatcher, d.mailbox) match {
                 case (Deploy.NoDispatcherGiven, Deploy.NoMailboxGiven) ⇒ props

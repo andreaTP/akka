@@ -90,9 +90,13 @@ private[akka] class Mailboxes(
   private var mailboxSizeWarningIssued = false
   private var mailboxNonZeroPushTimeoutWarningIssued = false
 
-  def getMailboxRequirement(config: Config) = config.getString("mailbox-requirement") match {
-    case NoMailboxRequirement ⇒ classOf[MessageQueue]
-    case x                    ⇒ dynamicAccess.getClassFor[AnyRef](x).get
+  def getMailboxRequirement(config: Config) = try {
+    config.getString("mailbox-requirement") match {
+      case NoMailboxRequirement ⇒ classOf[MessageQueue]
+      case x                    ⇒ dynamicAccess.getClassFor[AnyRef](x).get
+    }
+  } catch {
+    case _: Throwable ⇒ classOf[MessageQueue]
   }
 
   def getProducedMessageQueueType(mailboxType: MailboxType): Class[_] = {
@@ -113,7 +117,7 @@ private[akka] class Mailboxes(
    */
   protected[akka] def getMailboxType(props: Props, dispatcherConfig: Config): MailboxType = {
     val id = dispatcherConfig.getString("id")
-    val deploy = props.deploy
+    // val deploy = props.deploy
     val actorClass = props.actorClass
     lazy val actorRequirement = getRequiredType(actorClass)
 
@@ -122,8 +126,8 @@ private[akka] class Mailboxes(
     val hasMailboxRequirement: Boolean = mailboxRequirement != classOf[MessageQueue]
 
     val hasMailboxType =
-      dispatcherConfig.hasPath("mailbox-type") &&
-        dispatcherConfig.getString("mailbox-type") != Deploy.NoMailboxGiven
+      dispatcherConfig.hasPath("mailbox-type") /*&&
+        dispatcherConfig.getString("mailbox-type") != Deploy.NoMailboxGiven*/
 
     // TODO remove in 2.3
     if (!hasMailboxType && !mailboxSizeWarningIssued && dispatcherConfig.hasPath("mailbox-size")) {
@@ -145,11 +149,12 @@ private[akka] class Mailboxes(
       mailboxType
     }
 
-    if (deploy.mailbox != Deploy.NoMailboxGiven) {
-      verifyRequirements(lookup(deploy.mailbox))
-    } else if (deploy.dispatcher != Deploy.NoDispatcherGiven && hasMailboxType) {
-      verifyRequirements(lookup(dispatcherConfig.getString("id")))
-    } else if (hasRequiredType(actorClass)) {
+    // if (deploy.mailbox != Deploy.NoMailboxGiven) {
+    //   verifyRequirements(lookup(deploy.mailbox))
+    // } else if (deploy.dispatcher != Deploy.NoDispatcherGiven && hasMailboxType) {
+    //   verifyRequirements(lookup(dispatcherConfig.getString("id")))
+    // } else
+    if (hasRequiredType(actorClass)) {
       try verifyRequirements(lookupByQueueType(getRequiredType(actorClass)))
       catch {
         case NonFatal(thr) if (hasMailboxRequirement) ⇒ verifyRequirements(lookupByQueueType(mailboxRequirement))
@@ -228,7 +233,14 @@ private[akka] class Mailboxes(
   //INTERNAL API
   private def config(id: String): Config = {
     import scala.collection.JavaConverters._
-    ConfigFactory.parseMap(Map("id" → id).asJava)
+    // ConfigFactory.parseMap(Map("id" → id).asJava)
+    com.typesafe.config.Config(
+      org.akkajs.shocon.Config.Object(
+        Map(
+          "id" -> org.akkajs.shocon.Config.StringLiteral(id)
+        )
+      )
+    )
       .withFallback(settings.config.getConfig(id))
       .withFallback(defaultMailboxConfig)
   }

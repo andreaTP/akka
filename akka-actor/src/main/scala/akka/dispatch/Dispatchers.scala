@@ -135,13 +135,29 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
     def simpleName = id.substring(id.lastIndexOf('.') + 1)
     idConfig(id)
       .withFallback(appConfig)
-      .withFallback(ConfigFactory.parseMap(Map("name" → simpleName).asJava))
+      // .withFallback(ConfigFactory.parseMap(Map("name" → simpleName).asJava))
+      .withFallback(
+        com.typesafe.config.Config(
+          org.akkajs.shocon.Config.Object(
+            Map(
+              "name" -> org.akkajs.shocon.Config.StringLiteral(simpleName)
+            )
+          )
+        )
+      )
       .withFallback(defaultDispatcherConfig)
   }
 
   private def idConfig(id: String): Config = {
     import scala.collection.JavaConverters._
-    ConfigFactory.parseMap(Map("id" → id).asJava)
+    // ConfigFactory.parseMap(Map("id" → id).asJava)
+    com.typesafe.config.Config(
+      org.akkajs.shocon.Config.Object(
+        Map(
+          "id" -> org.akkajs.shocon.Config.StringLiteral(id)
+        )
+      )
+    )
   }
 
   /**
@@ -201,11 +217,14 @@ class Dispatchers(val settings: ActorSystem.Settings, val prerequisites: Dispatc
 class DispatcherConfigurator(config: Config, prerequisites: DispatcherPrerequisites)
   extends MessageDispatcherConfigurator(config, prerequisites) {
 
+  import scala.concurrent.duration._
+
   private val instance = new Dispatcher(
     this,
     config.getString("id"),
     config.getInt("throughput"),
-    config.getNanosDuration("throughput-deadline-time"),
+    // config.getNanosDuration("throughput-deadline-time"),
+    0 millis,
     configureExecutor(),
     config.getMillisDuration("shutdown-timeout"))
 
